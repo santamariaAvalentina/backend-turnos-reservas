@@ -7,4 +7,4 @@ Proyecto backend desarrollado con Node.js y ESM para la gestión de servicios de
 Para instalar las dependencias del proyecto, ejecutar:
 
 ```bash
-npm install# backend-turnos-reservas
+npm install
