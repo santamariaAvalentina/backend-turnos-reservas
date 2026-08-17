@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Consulta inicial",
+    "description": "Primera consulta del paciente",
+    "duration": 60,
+    "price": 15000,
+    "category": "Consulta",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Limpieza dental",
+    "description": "Limpieza y control dental",
+    "duration": 45,
+    "price": 12000,
+    "category": "Higiene",
+    "available": true
+  }
+]
