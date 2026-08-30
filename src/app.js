@@ -1,10 +1,10 @@
-export const app = {
-    name: 'backend-turnos-reservas',
-    version: '1.0.0',
-    status: 'initial setup'
-};
-import ServiceManager from "./managers/ServiceManager.js";
 
-const serviceManager = new ServiceManager();
+import express from "express";
+import servicesRouter from "./routes/services.router.js";
 
-console.log(serviceManager.getServices());
+const app = express();
+
+app.use(express.json());
+app.use("/api/services", servicesRouter);
+
+export default app;

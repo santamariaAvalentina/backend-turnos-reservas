@@ -15,6 +15,6 @@
     "duration": 45,
     "price": 12000,
     "category": "Higiene",
-    "available": true
+    "available": false
   }
 ]
