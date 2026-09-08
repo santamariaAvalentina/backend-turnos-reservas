@@ -9,12 +9,12 @@
     "available": true
   },
   {
-    "id": 2,
-    "name": "Limpieza dental",
-    "description": "Limpieza y control dental",
+    "id": 3,
+    "name": "arreglo caries",
+    "description": "tratameinto",
     "duration": 45,
-    "price": 12000,
-    "category": "Higiene",
-    "available": false
+    "price": 25000,
+    "category": "Tratamiento",
+    "available": true
   }
 ]
