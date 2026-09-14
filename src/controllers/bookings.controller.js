@@ -21,7 +21,7 @@ export default class BookingController {
             res.status(201).json(newBooking);
 
         } catch (error) {
-            res.status(500).json({
+            res.status(400).json({
                 error: error.message
             });
         }

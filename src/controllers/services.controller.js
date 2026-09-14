@@ -24,12 +24,12 @@ async getServiceById(req, res) {
     }
     res.json(service);
 }
-async addService(req, res) {
+async createService(req, res) {
     try {
         const newService = await serviceManager.addService(req.body);
         res.status(201).json(newService);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message });
     }
 }
 async updateService(req, res) {

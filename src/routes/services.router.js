@@ -1,5 +1,5 @@
 import express from "express";
-import ServiceController from "../controllers/ServiceController.js";
+import ServiceController from "../controllers/services.controller.js";
 
 
 const  router = express.Router();
@@ -9,7 +9,7 @@ const serviceController = new ServiceController();
 
 router.get("/", serviceController.getServices);
 
-router.post("/", serviceController.addService);
+router.post("/", serviceController.createService);
 
 router.get("/:id", serviceController.getServiceById);
 

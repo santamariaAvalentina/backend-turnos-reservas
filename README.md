@@ -1,26 +1,34 @@
 # Backend Turnos y Reservas
 
-Proyecto backend desarrollado con **Node.js** y **Express**, utilizando **ESM (ECMAScript Modules)**, para la gestión de servicios dentro de un sistema de turnos y reservas.
+Proyecto backend desarrollado con **Node.js** y **Express**, utilizando **ESM (ECMAScript Modules)**, para la gestión de servicios y reservas dentro de un sistema de turnos.
 
-El proyecto implementa una API REST que permite realizar operaciones CRUD sobre los servicios, consultar servicios mediante diferentes filtros y gestionar los datos almacenados en un archivo JSON.
+El proyecto implementa una API REST organizada en diferentes capas de responsabilidad:
+
+* **Routes:** definición de endpoints.
+* **Controllers:** recepción de requests y envío de responses.
+* **Managers:** lógica de acceso y manipulación de datos.
+* **JSON:** persistencia de la información.
 
 ---
 
 ## 📌 Objetivo del proyecto
 
-El objetivo es desarrollar una API backend que permita administrar los servicios disponibles en un sistema de turnos y reservas.
+El objetivo es desarrollar y organizar una API backend para administrar los servicios disponibles y las reservas de un sistema de turnos.
 
-A través de la API es posible:
+La API permite:
 
-* Consultar todos los servicios.
-* Buscar un servicio específico por su ID.
+* Consultar servicios.
+* Buscar servicios por ID.
 * Filtrar servicios por categoría.
-* Filtrar servicios según su disponibilidad.
+* Filtrar servicios según disponibilidad.
 * Crear nuevos servicios.
 * Modificar servicios existentes.
 * Eliminar servicios.
+* Crear reservas.
+* Consultar reservas por ID.
+* Agregar servicios a una reserva.
 
-El proyecto aplica conceptos fundamentales de **Node.js, Express, módulos ESM, variables de entorno, routing, CRUD y manejo de datos mediante archivos JSON**.
+La arquitectura separa las responsabilidades entre **rutas, controllers y managers**, permitiendo que el proyecto tenga una estructura más clara y preparada para futuras etapas.
 
 ---
 
@@ -45,14 +53,21 @@ backend-turnos-reservas/
 │   ├── config/
 │   │   └── env.config.js
 │   │
+│   ├── controllers/
+│   │   ├── services.controller.js
+│   │   └── bookings.controller.js
+│   │
 │   ├── data/
-│   │   └── services.json
+│   │   ├── services.json
+│   │   └── bookings.json
 │   │
 │   ├── managers/
-│   │   └── ServiceManager.js
+│   │   ├── ServiceManager.js
+│   │   └── BookingManager.js
 │   │
 │   ├── routes/
-│   │   └── services.router.js
+│   │   ├── services.router.js
+│   │   └── bookings.router.js
 │   │
 │   ├── app.js
 │   └── server.js
@@ -65,95 +80,48 @@ backend-turnos-reservas/
 └── README.md
 ```
 
-### Descripción de las carpetas y archivos
-
-**`src/config/env.config.js`**
-
-Contiene la configuración de las variables de entorno utilizadas por el proyecto.
-
-**`src/data/services.json`**
-
-Archivo JSON utilizado como fuente de datos para almacenar los servicios.
-
-**`src/managers/ServiceManager.js`**
-
-Contiene la clase encargada de gestionar las operaciones sobre los servicios, como obtener, crear, actualizar y eliminar datos.
-
-**`src/routes/services.router.js`**
-
-Define las rutas y endpoints de la API relacionados con los servicios.
-
-**`src/app.js`**
-
-Configura la aplicación de Express y registra las rutas.
-
-**`src/server.js`**
-
-Es el punto de entrada del servidor. Se encarga de cargar la configuración y poner el servidor en funcionamiento utilizando el puerto definido mediante variables de entorno.
-
 ---
 
-## ⚙️ Instalación
+## 🧩 Organización de responsabilidades
 
-Para instalar las dependencias del proyecto, ejecutar:
+### Routes
 
-```bash
-npm install
-```
+Los routers se encargan únicamente de definir los endpoints y conectarlos con los métodos correspondientes de los controllers.
 
----
+No contienen lógica de negocio ni acceso directo a los archivos JSON.
 
-## 🔐 Variables de entorno
+### Controllers
 
-El proyecto utiliza **dotenv** para trabajar con variables de entorno.
+Los controllers reciben las requests, leen los datos enviados mediante:
 
-Se debe crear un archivo `.env` en la raíz del proyecto con las variables necesarias:
+* `req.params`
+* `req.query`
+* `req.body`
 
-```env
-PORT=8080
-NODE_ENV=development
-```
+Luego interactúan con los managers y construyen la respuesta mediante `res.status().json()`.
 
-También se incluye un archivo `.env.example` como referencia:
+### Managers
 
-```env
-PORT=
-NODE_ENV=
-```
+Los managers contienen la lógica relacionada con la manipulación y persistencia de los datos.
 
-El archivo `.env` se encuentra incluido en `.gitignore` para evitar subir información de configuración local al repositorio.
+Trabajan con los archivos JSON y no utilizan `req` ni `res`.
 
----
-
-## ▶️ Ejecución del proyecto
-
-Para iniciar el servidor se debe ejecutar:
-
-```bash
-npm start
-```
-
-El servidor utilizará el puerto configurado en la variable de entorno `PORT`.
-
-Por ejemplo:
-
-```text
-http://localhost:8080
-```
+Esta separación permite mantener una arquitectura más organizada y facilita futuras modificaciones.
 
 ---
 
 # 📡 API REST
 
-La API utiliza como ruta base:
+La API utiliza las siguientes rutas base:
 
 ```text
 /api/services
+/api/bookings
 ```
 
-A partir de esta ruta se pueden realizar las diferentes operaciones sobre los servicios.
-
 ---
+
+# 🦷 Services
 
 ## 📋 GET - Obtener todos los servicios
 
@@ -189,7 +157,7 @@ GET /api/services?available=true
 
 Permite obtener los servicios según su disponibilidad.
 
-También se puede consultar por servicios no disponibles:
+También se pueden consultar los servicios no disponibles:
 
 ```http
 GET /api/services?available=false
@@ -211,11 +179,15 @@ Ejemplo:
 GET /api/services/1
 ```
 
-Si el servicio solicitado no existe, la API devuelve un error `404`.
+Si el servicio solicitado no existe, la API devuelve:
+
+```text
+404 Not Found
+```
 
 ---
 
-# ➕ POST - Crear un servicio
+## ➕ POST - Crear un servicio
 
 ```http
 POST /api/services
@@ -223,7 +195,7 @@ POST /api/services
 
 Permite agregar un nuevo servicio.
 
-Los datos se envían mediante el `body` de la petición en formato JSON.
+Los datos se envían mediante el body de la petición en formato JSON.
 
 Ejemplo:
 
@@ -238,30 +210,15 @@ Ejemplo:
 }
 ```
 
-Para crear un servicio se validan los campos necesarios:
-
-* `name`
-* `description`
-* `duration`
-* `price`
-* `category`
-* `available`
-
-Si la creación es correcta, la API responde con el código:
+Si la creación es correcta, la API responde:
 
 ```text
 201 Created
 ```
 
-Si faltan datos obligatorios, devuelve:
-
-```text
-400 Bad Request
-```
-
 ---
 
-# ✏️ PUT - Actualizar un servicio
+## ✏️ PUT - Actualizar un servicio
 
 ```http
 PUT /api/services/:sid
@@ -275,9 +232,9 @@ Ejemplo:
 PUT /api/services/1
 ```
 
-Los datos actualizados se envían en formato JSON mediante el `body`.
+Los datos actualizados se envían mediante el body en formato JSON.
 
-El ID utilizado para identificar el servicio se mantiene y no se modifica desde el `body`.
+El ID utilizado para identificar el servicio se mantiene y no se modifica desde el body.
 
 Si el servicio no existe, la API devuelve:
 
@@ -287,7 +244,7 @@ Si el servicio no existe, la API devuelve:
 
 ---
 
-# 🗑️ DELETE - Eliminar un servicio
+## 🗑️ DELETE - Eliminar un servicio
 
 ```http
 DELETE /api/services/:sid
@@ -303,7 +260,7 @@ DELETE /api/services/1
 
 Si el servicio existe, se elimina correctamente.
 
-Si no se encuentra el ID solicitado, la API devuelve:
+Si el ID solicitado no existe, la API devuelve:
 
 ```text
 404 Not Found
@@ -311,15 +268,96 @@ Si no se encuentra el ID solicitado, la API devuelve:
 
 ---
 
+# 📅 Bookings
+
+## ➕ POST - Crear una reserva
+
+```http
+POST /api/bookings
+```
+
+Permite crear una nueva reserva.
+
+Los datos se envían mediante el body de la petición en formato JSON.
+
+Si la creación es correcta, la API responde:
+
+```text
+201 Created
+```
+
+---
+
+## 🔍 GET - Obtener una reserva por ID
+
+```http
+GET /api/bookings/:bid
+```
+
+Permite consultar una reserva específica utilizando su identificador.
+
+Ejemplo:
+
+```http
+GET /api/bookings/1
+```
+
+Si la reserva no existe, la API devuelve:
+
+```text
+404 Not Found
+```
+
+---
+
+## ➕ Agregar un servicio a una reserva
+
+```http
+POST /api/bookings/:bid/services/:sid
+```
+
+Permite agregar un servicio existente a una reserva.
+
+Ejemplo:
+
+```http
+POST /api/bookings/1/services/2
+```
+
+Antes de agregar el servicio, el controller verifica:
+
+1. Que la reserva exista.
+2. Que el servicio exista.
+
+Si la reserva no existe:
+
+```text
+404 Not Found
+```
+
+Si el servicio no existe:
+
+```text
+404 Not Found
+```
+
+Si ambas entidades existen, se actualiza la reserva correctamente.
+
+---
+
 # 🧩 ServiceManager
 
-La gestión de los servicios se encuentra centralizada en la clase `ServiceManager`.
+La gestión de los servicios se encuentra centralizada en:
+
+```text
+src/managers/ServiceManager.js
+```
 
 La clase cuenta con los siguientes métodos:
 
 ### `getServices()`
 
-Obtiene los servicios y permite aplicar filtros por:
+Obtiene los servicios almacenados y permite aplicar filtros por:
 
 * categoría (`category`)
 * disponibilidad (`available`)
@@ -330,7 +368,7 @@ Busca un servicio específico mediante su ID.
 
 ### `addService()`
 
-Agrega un nuevo servicio después de validar que se encuentren presentes los campos requeridos.
+Agrega un nuevo servicio y persiste la información en el archivo JSON.
 
 ### `updateService()`
 
@@ -342,37 +380,110 @@ Elimina un servicio mediante su ID.
 
 ---
 
-# 🧪 Pruebas de la API
+# 📅 BookingManager
 
-Las diferentes operaciones fueron probadas utilizando **Postman**.
-
-Se realizaron pruebas de los principales métodos HTTP:
+La gestión de las reservas se encuentra centralizada en:
 
 ```text
-GET
-POST
-PUT
-DELETE
+src/managers/BookingManager.js
 ```
 
-También se probaron:
+El manager se encarga de trabajar con los datos almacenados en:
 
-* Consulta de todos los servicios.
-* Consulta de un servicio por ID.
-* Filtro por categoría.
-* Filtro por disponibilidad.
-* Creación de servicios.
-* Validación de datos.
-* Actualización de servicios.
-* Eliminación de servicios.
-* Respuestas `404` cuando no se encuentra un servicio.
-* Respuesta `400` ante datos incompletos al crear un servicio.
+```text
+src/data/bookings.json
+```
+
+Entre sus responsabilidades se encuentran:
+
+* Crear reservas.
+* Buscar reservas por ID.
+* Agregar servicios a una reserva.
+* Persistir los cambios en el archivo JSON.
+
+---
+
+# ⚙️ Variables de entorno
+
+El proyecto utiliza **dotenv** para trabajar con variables de entorno.
+
+Se debe crear un archivo `.env` en la raíz del proyecto con las variables necesarias:
+
+```env
+PORT=8080
+NODE_ENV=development
+```
+
+También se incluye un archivo `.env.example` como referencia:
+
+```env
+PORT=
+NODE_ENV=
+```
+
+El archivo `.env` se encuentra incluido en `.gitignore` para evitar subir información de configuración local al repositorio.
+
+---
+
+# ▶️ Ejecución del proyecto
+
+Para instalar las dependencias:
+
+```bash
+npm install
+```
+
+Para iniciar el servidor:
+
+```bash
+npm start
+```
+
+El servidor utilizará el puerto configurado en la variable de entorno `PORT`.
+
+Por ejemplo:
+
+```text
+http://localhost:8080
+```
+
+---
+
+# 🧪 Pruebas de la API
+
+Las operaciones de la API fueron probadas utilizando **Postman**.
+
+Se realizaron pruebas sobre los principales endpoints de:
+
+### Services
+
+* GET de todos los servicios.
+* GET de un servicio por ID.
+* GET de un ID inexistente.
+* Filtrado por categoría.
+* Filtrado por disponibilidad.
+* POST para crear servicios.
+* PUT para actualizar servicios.
+* DELETE de servicios.
+* DELETE de un ID inexistente.
+* GET posterior a un DELETE para comprobar la persistencia de la eliminación.
+
+### Bookings
+
+* POST para crear reservas.
+* GET de reservas por ID.
+* GET de reservas inexistentes.
+* POST para agregar servicios a una reserva.
+* Validación de reserva inexistente.
+* Validación de servicio inexistente.
+
+Las pruebas permitieron comprobar el funcionamiento de los endpoints y la correcta separación entre **Routes, Controllers y Managers**.
 
 ---
 
 # 📦 Dependencias
 
-El proyecto utiliza principalmente las siguientes dependencias:
+El proyecto utiliza principalmente:
 
 ### Express
 
@@ -400,16 +511,20 @@ Durante el desarrollo del proyecto se trabajaron conceptos de:
 * CRUD
 * Query parameters
 * Route parameters
+* Controllers
+* Managers
+* Separación de responsabilidades
 * Manejo de respuestas HTTP
 * Validación de datos
 * Manejo de errores
 * Clases y métodos
-* Manejo de archivos JSON
+* Manejo y persistencia de archivos JSON
+* Pruebas de API con Postman
 
 ---
 
 ## 👩‍💻 Autor
 
-**Valentina Santamaria**
+**Andrea Valentina Santamaria**
 
 Proyecto desarrollado como parte del curso **Backend 1 - Coderhouse**.

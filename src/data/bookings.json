@@ -6,6 +6,25 @@
     "date": "2026-09-15",
     "time": "10:00",
     "status": "pending",
-    "services": []
+    "services": [
+      {
+        "service": 1,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "clientName": "Juan Pérez",
+    "clientEmail": "juan@email.com",
+    "date": "2026-09-15",
+    "time": "10:00",
+    "status": "pending",
+    "services": [
+      {
+        "service": 1,
+        "quantity": 3
+      }
+    ]
   }
 ]
