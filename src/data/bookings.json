@@ -26,5 +26,19 @@
         "quantity": 3
       }
     ]
+  },
+  {
+    "id": 3,
+    "clientName": "Valentina",
+    "clientEmail": "vale@email.com",
+    "date": "2026-10-01",
+    "time": "10:00",
+    "status": "confirmed",
+    "services": [
+      {
+        "service": 1,
+        "quantity": 2
+      }
+    ]
   }
 ]

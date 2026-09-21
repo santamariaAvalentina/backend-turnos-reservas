@@ -2,12 +2,16 @@
 
 Proyecto backend desarrollado con **Node.js** y **Express**, utilizando **ESM (ECMAScript Modules)**, para la gestión de servicios y reservas dentro de un sistema de turnos.
 
-El proyecto implementa una API REST organizada en diferentes capas de responsabilidad:
+El proyecto implementa una API REST organizada mediante una arquitectura en capas, separando las responsabilidades de cada componente:
 
 * **Routes:** definición de endpoints.
 * **Controllers:** recepción de requests y envío de responses.
-* **Managers:** lógica de acceso y manipulación de datos.
-* **JSON:** persistencia de la información.
+* **Services:** lógica de negocio y validaciones.
+* **Repositories:** intermediarios entre los Services y los DAO.
+* **DAO:** acceso directo y persistencia de datos.
+* **JSON:** almacenamiento de la información.
+
+La arquitectura permite mantener el código organizado y facilita futuras modificaciones, como el reemplazo de la persistencia mediante archivos JSON por una base de datos.
 
 ---
 
@@ -28,7 +32,81 @@ La API permite:
 * Consultar reservas por ID.
 * Agregar servicios a una reserva.
 
-La arquitectura separa las responsabilidades entre **rutas, controllers y managers**, permitiendo que el proyecto tenga una estructura más clara y preparada para futuras etapas.
+La arquitectura separa las responsabilidades entre **Routes, Controllers, Services, Repositories y DAO**, permitiendo una estructura más clara y preparada para futuras etapas del proyecto.
+
+---
+
+## 🏗️ Arquitectura en capas
+
+El flujo de las peticiones sigue la siguiente estructura:
+
+```text
+Router
+   ↓
+Controller
+   ↓
+Service
+   ↓
+Repository
+   ↓
+DAO
+   ↓
+JSON
+```
+
+### Routes
+
+Los routers se encargan únicamente de definir los endpoints y conectarlos con los métodos correspondientes de los controllers.
+
+No contienen lógica de negocio ni acceso directo a los archivos JSON.
+
+### Controllers
+
+Los controllers reciben las requests y trabajan con:
+
+* `req.params`
+* `req.query`
+* `req.body`
+
+Luego llaman a los Services correspondientes y construyen la respuesta mediante `res.status().json()`.
+
+Los controllers no acceden directamente a los archivos JSON ni contienen lógica de negocio.
+
+### Services
+
+Los Services contienen la lógica de negocio de la aplicación.
+
+Entre sus responsabilidades se encuentran:
+
+* Validar los datos recibidos.
+* Generar identificadores.
+* Aplicar filtros.
+* Comprobar la existencia de entidades.
+* Aplicar reglas de negocio.
+* Coordinar las operaciones necesarias mediante los Repositories.
+
+Los Services no utilizan `req` ni `res` y no acceden directamente a los archivos JSON.
+
+### Repositories
+
+Los Repositories funcionan como una capa intermedia entre los Services y los DAO.
+
+Se encargan de utilizar los métodos del DAO y abstraer la forma en que los Services acceden a los datos.
+
+Esto permite que la lógica de negocio no dependa directamente del mecanismo de persistencia utilizado.
+
+### DAO
+
+Los DAO se encargan del acceso directo a los datos.
+
+En esta etapa del proyecto utilizan archivos JSON para:
+
+* Leer información.
+* Crear registros.
+* Actualizar registros.
+* Eliminar registros.
+
+Los DAO no contienen reglas de negocio ni utilizan `req` o `res`.
 
 ---
 
@@ -48,6 +126,7 @@ La arquitectura separa las responsabilidades entre **rutas, controllers y manage
 
 ```text
 backend-turnos-reservas/
+
 │
 ├── src/
 │   ├── config/
@@ -57,22 +136,29 @@ backend-turnos-reservas/
 │   │   ├── services.controller.js
 │   │   └── bookings.controller.js
 │   │
-│   ├── data/
-│   │   ├── services.json
-│   │   └── bookings.json
+│   ├── services/
+│   │   ├── services.service.js
+│   │   └── bookings.service.js
 │   │
-│   ├── managers/
-│   │   ├── ServiceManager.js
-│   │   └── BookingManager.js
+│   ├── repositories/
+│   │   ├── services.repository.js
+│   │   └── bookings.repository.js
+│   │
+│   ├── dao/
+│   │   ├── services.dao.js
+│   │   └── bookings.dao.js
 │   │
 │   ├── routes/
 │   │   ├── services.router.js
 │   │   └── bookings.router.js
 │   │
+│   ├── data/
+│   │   ├── services.json
+│   │   └── bookings.json
+│   │
 │   ├── app.js
 │   └── server.js
 │
-├── .env
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -80,33 +166,7 @@ backend-turnos-reservas/
 └── README.md
 ```
 
----
-
-## 🧩 Organización de responsabilidades
-
-### Routes
-
-Los routers se encargan únicamente de definir los endpoints y conectarlos con los métodos correspondientes de los controllers.
-
-No contienen lógica de negocio ni acceso directo a los archivos JSON.
-
-### Controllers
-
-Los controllers reciben las requests, leen los datos enviados mediante:
-
-* `req.params`
-* `req.query`
-* `req.body`
-
-Luego interactúan con los managers y construyen la respuesta mediante `res.status().json()`.
-
-### Managers
-
-Los managers contienen la lógica relacionada con la manipulación y persistencia de los datos.
-
-Trabajan con los archivos JSON y no utilizan `req` ni `res`.
-
-Esta separación permite mantener una arquitectura más organizada y facilita futuras modificaciones.
+> El archivo `.env` se utiliza de forma local y se encuentra incluido en `.gitignore`, por lo que no debe subirse al repositorio público.
 
 ---
 
@@ -140,6 +200,8 @@ GET /api/services?category=nombreCategoria
 ```
 
 Permite obtener únicamente los servicios pertenecientes a una determinada categoría.
+
+El filtro no distingue entre mayúsculas y minúsculas.
 
 Ejemplo:
 
@@ -280,6 +342,8 @@ Permite crear una nueva reserva.
 
 Los datos se envían mediante el body de la petición en formato JSON.
 
+Al crear una reserva, el campo `services` se inicializa como un array vacío.
+
 Si la creación es correcta, la API responde:
 
 ```text
@@ -324,7 +388,7 @@ Ejemplo:
 POST /api/bookings/1/services/2
 ```
 
-Antes de agregar el servicio, el controller verifica:
+Antes de agregar el servicio se comprueba:
 
 1. Que la reserva exista.
 2. Que el servicio exista.
@@ -341,65 +405,18 @@ Si el servicio no existe:
 404 Not Found
 ```
 
-Si ambas entidades existen, se actualiza la reserva correctamente.
+Si ambas entidades existen, el servicio se agrega a la reserva.
 
----
+Si el mismo servicio ya se encuentra agregado, se incrementa su cantidad:
 
-# 🧩 ServiceManager
-
-La gestión de los servicios se encuentra centralizada en:
-
-```text
-src/managers/ServiceManager.js
+```json
+{
+  "service": 2,
+  "quantity": 2
+}
 ```
 
-La clase cuenta con los siguientes métodos:
-
-### `getServices()`
-
-Obtiene los servicios almacenados y permite aplicar filtros por:
-
-* categoría (`category`)
-* disponibilidad (`available`)
-
-### `getServiceById()`
-
-Busca un servicio específico mediante su ID.
-
-### `addService()`
-
-Agrega un nuevo servicio y persiste la información en el archivo JSON.
-
-### `updateService()`
-
-Actualiza los datos de un servicio existente.
-
-### `deleteService()`
-
-Elimina un servicio mediante su ID.
-
----
-
-# 📅 BookingManager
-
-La gestión de las reservas se encuentra centralizada en:
-
-```text
-src/managers/BookingManager.js
-```
-
-El manager se encarga de trabajar con los datos almacenados en:
-
-```text
-src/data/bookings.json
-```
-
-Entre sus responsabilidades se encuentran:
-
-* Crear reservas.
-* Buscar reservas por ID.
-* Agregar servicios a una reserva.
-* Persistir los cambios en el archivo JSON.
+Esta regla de negocio se encuentra implementada en `bookings.service.js`.
 
 ---
 
@@ -453,9 +470,9 @@ http://localhost:8080
 
 Las operaciones de la API fueron probadas utilizando **Postman**.
 
-Se realizaron pruebas sobre los principales endpoints de:
+## Services
 
-### Services
+Se realizaron pruebas sobre:
 
 * GET de todos los servicios.
 * GET de un servicio por ID.
@@ -463,21 +480,25 @@ Se realizaron pruebas sobre los principales endpoints de:
 * Filtrado por categoría.
 * Filtrado por disponibilidad.
 * POST para crear servicios.
+* Validación de campos obligatorios.
 * PUT para actualizar servicios.
 * DELETE de servicios.
 * DELETE de un ID inexistente.
 * GET posterior a un DELETE para comprobar la persistencia de la eliminación.
 
-### Bookings
+## Bookings
+
+Se realizaron pruebas sobre:
 
 * POST para crear reservas.
 * GET de reservas por ID.
 * GET de reservas inexistentes.
 * POST para agregar servicios a una reserva.
+* Agregar nuevamente un servicio existente y comprobar el incremento de `quantity`.
 * Validación de reserva inexistente.
 * Validación de servicio inexistente.
 
-Las pruebas permitieron comprobar el funcionamiento de los endpoints y la correcta separación entre **Routes, Controllers y Managers**.
+Las pruebas permitieron comprobar el funcionamiento de los endpoints y la correcta separación entre **Routes, Controllers, Services, Repositories y DAO**.
 
 ---
 
@@ -512,7 +533,10 @@ Durante el desarrollo del proyecto se trabajaron conceptos de:
 * Query parameters
 * Route parameters
 * Controllers
-* Managers
+* Services
+* Repositories
+* DAO
+* Arquitectura en capas
 * Separación de responsabilidades
 * Manejo de respuestas HTTP
 * Validación de datos
