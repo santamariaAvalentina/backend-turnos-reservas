@@ -27,9 +27,8 @@ export class ServicesService {
   }
 
   async createService(serviceData) {
-    const services = await servicesRepository.getAll();
 
-    const { name, description, duration, price, category, available } =
+    const { name, description, duration, price, category } =
       serviceData;
 
     if (
@@ -37,27 +36,18 @@ export class ServicesService {
       !description ||
       !duration ||
       !price ||
-      !category ||
-      available === undefined
+      !category 
     ) {
       throw new Error(
         "Todos los campos del servicio son obligatorios (name, description, duration, price, category)",
       );
     }
-
-    const newId =
-      services.length > 0
-        ? Math.max(...services.map((service) => service.id)) + 1
-        : 1;
-
     const newService = {
-      id: newId,
       name,
       description,
       duration,
       price,
       category,
-      available,
     };
 
     return await servicesRepository.create(newService);

@@ -6,8 +6,6 @@ const servicesRepository = new ServicesRepository();
 
 export class BookingsService {
   async createBooking(bookingData) {
-    const bookings = await bookingsRepository.getAll();
-
     const { clientName, clientEmail, date, time, status } = bookingData;
 
     if (!clientName || !clientEmail || !date || !time || !status) {
@@ -16,13 +14,7 @@ export class BookingsService {
       );
     }
 
-    const newId =
-      bookings.length > 0
-        ? Math.max(...bookings.map((booking) => booking.id)) + 1
-        : 1;
-
     const newBooking = {
-      id: newId,
       clientName,
       clientEmail,
       date,
@@ -52,14 +44,14 @@ export class BookingsService {
     }
 
     const existingService = booking.services.find(
-      (item) => item.service === Number(serviceId),
+      (item) => item.service.equals(serviceId),
     );
 
     if (existingService) {
       existingService.quantity += 1;
     } else {
       booking.services.push({
-        service: Number(serviceId),
+        service: serviceId,
         quantity: 1,
       });
     }
