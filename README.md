@@ -10,6 +10,8 @@ El proyecto implementa una API REST organizada mediante una arquitectura en capa
 * **Repositories:** intermediarios entre los Services y los DAO.
 * **DAO:** acceso directo y persistencia de datos.
 * **MongoDB:** almacenamiento de la información.
+* **Handlebars:** generación de vistas del lado del servidor.
+* **Socket.io:** comunicación en tiempo real entre el servidor y los clientes.
 
 La arquitectura permite mantener el código organizado y facilita el reemplazo o modificación de la capa de persistencia sin afectar las demás capas de la aplicación.
 
@@ -17,9 +19,9 @@ La arquitectura permite mantener el código organizado y facilita el reemplazo o
 
 # 📌 Objetivo del proyecto
 
-El objetivo es desarrollar y organizar una API backend para administrar los servicios disponibles y las reservas de un sistema de turnos.
+El objetivo es desarrollar y organizar una aplicación backend para administrar los servicios disponibles y las reservas de un sistema de turnos.
 
-La API permite:
+La aplicación permite:
 
 * Consultar servicios.
 * Buscar servicios por ID.
@@ -30,8 +32,12 @@ La API permite:
 * Eliminar servicios.
 * Crear reservas.
 * Consultar reservas por ID.
+* Consultar las reservas existentes mediante una vista.
 * Agregar servicios a una reserva.
 * Crear y consultar mensajes.
+* Mostrar los servicios mediante vistas desarrolladas con Handlebars.
+* Mostrar las reservas mediante vistas desarrolladas con Handlebars.
+* Actualizar la vista de servicios en tiempo real utilizando Socket.io.
 
 La arquitectura separa las responsabilidades entre **Routes, Controllers, Services, Repositories y DAO**, permitiendo una estructura clara y preparada para trabajar con una base de datos.
 
@@ -39,7 +45,7 @@ La arquitectura separa las responsabilidades entre **Routes, Controllers, Servic
 
 # 🏗️ Arquitectura en capas
 
-El flujo de las peticiones sigue la siguiente estructura:
+El flujo de las peticiones de la API REST sigue la siguiente estructura:
 
 ```text
 Router
@@ -57,13 +63,13 @@ Mongoose
 MongoDB Atlas
 ```
 
-### Routes
+## Routes
 
 Los routers se encargan de definir los endpoints y conectarlos con los métodos correspondientes de los Controllers.
 
 No contienen lógica de negocio ni acceso directo a MongoDB.
 
-### Controllers
+## Controllers
 
 Los Controllers reciben las requests y trabajan con:
 
@@ -75,7 +81,7 @@ Luego llaman a los Services correspondientes y construyen las respuestas mediant
 
 Los Controllers no acceden directamente a MongoDB ni contienen la lógica de negocio principal.
 
-### Services
+## Services
 
 Los Services contienen la lógica de negocio de la aplicación.
 
@@ -89,7 +95,7 @@ Entre sus responsabilidades se encuentran:
 
 Los Services no utilizan `req` ni `res` y no acceden directamente a MongoDB.
 
-### Repositories
+## Repositories
 
 Los Repositories funcionan como una capa intermedia entre los Services y los DAO.
 
@@ -97,7 +103,7 @@ Se encargan de utilizar los métodos del DAO y abstraer la forma en que los Serv
 
 Esto permite que la lógica de negocio no dependa directamente de la implementación de persistencia.
 
-### DAO
+## DAO
 
 Los DAO se encargan del acceso directo a los datos mediante los modelos de Mongoose.
 
@@ -110,6 +116,133 @@ Son responsables de realizar operaciones de persistencia como:
 * Eliminar documentos.
 
 Los DAO no contienen reglas de negocio ni utilizan `req` o `res`.
+
+---
+
+# 🖥️ Vistas con Handlebars
+
+El proyecto incorpora **Handlebars** para generar vistas HTML desde el servidor.
+
+La configuración se realiza mediante `express-handlebars`.
+
+Las vistas utilizan información obtenida desde MongoDB a través de las capas existentes:
+
+```text
+Vista
+   ↓
+Views Controller
+   ↓
+Service
+   ↓
+Repository
+   ↓
+DAO
+   ↓
+MongoDB
+```
+
+De esta manera, las vistas no utilizan datos hardcodeados.
+
+## Servicios
+
+La vista de servicios permite visualizar:
+
+* Nombre.
+* Descripción.
+* Duración.
+* Precio.
+* Categoría.
+* Disponibilidad.
+
+Ruta:
+
+```http
+GET /views/services
+```
+
+## Reservas
+
+La vista de reservas permite visualizar las reservas almacenadas en MongoDB.
+
+Ruta:
+
+```http
+GET /views/bookings
+```
+
+La información mostrada se obtiene directamente desde la base de datos mediante las capas de la aplicación.
+
+## Detalle de servicio
+
+También se dispone de una vista para consultar el detalle de un servicio:
+
+```http
+GET /views/services/:sid
+```
+
+## Detalle de reserva
+
+La vista permite consultar una reserva específica:
+
+```http
+GET /views/bookings/:bid
+```
+
+---
+
+# ⚡ Comunicación en tiempo real con Socket.io
+
+El proyecto incorpora **Socket.io** para permitir comunicación en tiempo real entre el servidor y los clientes.
+
+Socket.io se configura sobre el servidor HTTP de Node.js.
+
+Cuando un cliente se conecta, el servidor establece la comunicación mediante WebSockets.
+
+```text
+Cliente
+   ↕
+Socket.io
+   ↕
+Servidor
+```
+
+## Actualización de servicios en tiempo real
+
+Se implementó un evento llamado:
+
+```text
+servicesUpdated
+```
+
+Cuando se crea un nuevo servicio mediante la API REST, el servidor obtiene nuevamente la lista de servicios y emite el evento:
+
+```text
+servicesUpdated
+```
+
+El navegador escucha este evento mediante:
+
+```javascript
+socket.on("servicesUpdated", ...)
+```
+
+Cuando recibe los nuevos datos, actualiza la vista de servicios sin necesidad de recargar manualmente la página.
+
+De esta manera, una acción realizada mediante la API REST puede reflejarse inmediatamente en la vista del navegador.
+
+---
+
+# 🎨 Estilos
+
+Las vistas utilizan un archivo CSS ubicado en:
+
+```text
+public/css/styles.css
+```
+
+Los estilos utilizan **Flexbox** para organizar las tarjetas de servicios y reservas de forma responsive.
+
+Las tarjetas se reorganizan automáticamente dependiendo del tamaño disponible de la pantalla.
 
 ---
 
@@ -137,7 +270,9 @@ En las reservas, los servicios asociados se almacenan mediante referencias `Obje
 
 ```text
 services
+
     ↓
+
 service: ObjectId
 quantity: Number
 ```
@@ -155,6 +290,11 @@ Esto permite mantener la relación entre una reserva y los servicios existentes 
 * **Mongoose**
 * **MongoDB Atlas**
 * **dotenv**
+* **Handlebars**
+* **express-handlebars**
+* **Socket.io**
+* **HTML**
+* **CSS**
 * **Postman** para realizar pruebas de los endpoints.
 
 ---
@@ -165,6 +305,13 @@ Esto permite mantener la relación entre una reserva y los servicios existentes 
 backend-turnos-reservas/
 
 │
+├── public/
+│   ├── css/
+│   │   └── styles.css
+│   │
+│   └── js/
+│       └── socket.js
+│
 ├── src/
 │   │
 │   ├── config/
@@ -174,7 +321,8 @@ backend-turnos-reservas/
 │   ├── controllers/
 │   │   ├── services.controller.js
 │   │   ├── bookings.controller.js
-│   │   └── messages.controller.js
+│   │   ├── messages.controller.js
+│   │   └── views.controller.js
 │   │
 │   ├── services/
 │   │   ├── services.service.js
@@ -198,7 +346,18 @@ backend-turnos-reservas/
 │   ├── routes/
 │   │   ├── services.router.js
 │   │   ├── bookings.router.js
-│   │   └── messages.routes.js
+│   │   ├── messages.router.js
+│   │   └── views.router.js
+│   │
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   └── main.handlebars
+│   │   │
+│   │   ├── services.handlebars
+│   │   ├── service-detail.handlebars
+│   │   ├── bookings.handlebars
+│   │   ├── booking-detail.handlebars
+│   │   └── realtime-services.handlebars
 │   │
 │   ├── app.js
 │   └── server.js
@@ -223,6 +382,15 @@ La API utiliza las siguientes rutas base:
 /api/bookings
 /api/messages
 ```
+
+Las funcionalidades de Handlebars utilizan una ruta independiente:
+
+```text
+/views/services
+/views/bookings
+```
+
+De esta manera, la incorporación de las vistas no reemplaza ni modifica la API REST existente.
 
 ---
 
@@ -280,12 +448,6 @@ GET /api/services/:sid
 
 Permite obtener un servicio específico utilizando su identificador de MongoDB.
 
-Ejemplo:
-
-```http
-GET /api/services/6ab9a6f2c7ee1d10094f5922
-```
-
 Si el servicio solicitado no existe, la API devuelve:
 
 ```text
@@ -308,12 +470,12 @@ Ejemplo:
 
 ```json
 {
-    "name": "Consulta",
-    "description": "Consulta general",
-    "duration": 60,
-    "price": 5000,
-    "category": "salud",
-    "available": true
+  "name": "Consulta",
+  "description": "Consulta general",
+  "duration": 60,
+  "price": 5000,
+  "category": "salud",
+  "available": true
 }
 ```
 
@@ -327,6 +489,8 @@ Si la creación es correcta, la API responde:
 
 MongoDB/Mongoose genera automáticamente el `_id` del documento.
 
+Además, al crear un servicio se emite el evento `servicesUpdated` mediante Socket.io para actualizar las vistas conectadas en tiempo real.
+
 ---
 
 ## ✏️ PUT - Actualizar un servicio
@@ -337,15 +501,7 @@ PUT /api/services/:sid
 
 Permite modificar los datos de un servicio existente utilizando su ID.
 
-Ejemplo:
-
-```http
-PUT /api/services/6ab9a6f2c7ee1d10094f5922
-```
-
 Los datos actualizados se envían mediante el body en formato JSON.
-
-El ID utilizado para identificar el servicio se mantiene y no se modifica desde el body.
 
 Si no se envía un body, la API responde:
 
@@ -368,12 +524,6 @@ DELETE /api/services/:sid
 ```
 
 Permite eliminar un servicio utilizando su identificador.
-
-Ejemplo:
-
-```http
-DELETE /api/services/6ab9a6f2c7ee1d10094f5922
-```
 
 Si el servicio existe, se elimina correctamente.
 
@@ -415,12 +565,6 @@ GET /api/bookings/:bid
 
 Permite consultar una reserva específica utilizando su identificador de MongoDB.
 
-Ejemplo:
-
-```http
-GET /api/bookings/6abc3b22db77c9d2716db071
-```
-
 Si la reserva no existe, la API devuelve:
 
 ```text
@@ -437,37 +581,21 @@ POST /api/bookings/:bid/services/:sid
 
 Permite agregar un servicio existente a una reserva.
 
-Ejemplo:
-
-```http
-POST /api/bookings/6abc3b22db77c9d2716db071/services/6ab9a6f2c7ee1d10094f5922
-```
-
 Antes de agregar el servicio se comprueba:
 
 1. Que la reserva exista.
 2. Que el servicio exista.
 
-Si la reserva no existe:
-
-```text
-404 Not Found
-```
-
-Si el servicio no existe:
-
-```text
-404 Not Found
-```
-
 Si ambas entidades existen, el servicio se agrega a la reserva.
 
-Si el mismo servicio ya se encuentra agregado, se incrementa su cantidad:
+Si el mismo servicio ya se encuentra agregado, se incrementa su cantidad.
+
+Ejemplo:
 
 ```json
 {
-    "service": "6ab9a6f2c7ee1d10094f5922",
-    "quantity": 2
+  "service": "6ab9a6f2c7ee1d10094f5922",
+  "quantity": 2
 }
 ```
 
@@ -497,12 +625,6 @@ GET /api/messages/:id
 
 Permite obtener un mensaje específico utilizando su identificador.
 
-Ejemplo:
-
-```http
-GET /api/messages/6abc47bd4b476c2b54ef621e
-```
-
 Si el mensaje no existe, la API devuelve:
 
 ```text
@@ -525,8 +647,8 @@ Ejemplo:
 
 ```json
 {
-    "user": "Valentina",
-    "message": "Mensaje de prueba"
+  "user": "Valentina",
+  "message": "Mensaje de prueba"
 }
 ```
 
@@ -544,11 +666,13 @@ Mongoose genera automáticamente el `_id`, `createdAt` y `updatedAt`.
 
 El proyecto utiliza **dotenv** para trabajar con variables de entorno.
 
-Se debe crear un archivo `.env` en la raíz del proyecto con las variables necesarias:
+Se debe crear un archivo `.env` en la raíz del proyecto:
 
 ```env
 PORT=8080
+
 NODE_ENV=development
+
 MONGO_URI=tu_uri_de_mongodb
 ```
 
@@ -556,7 +680,9 @@ También se incluye un archivo `.env.example` como referencia:
 
 ```env
 PORT=
+
 NODE_ENV=
+
 MONGO_URI=
 ```
 
@@ -580,13 +706,7 @@ Instalar las dependencias:
 npm install
 ```
 
-Crear el archivo `.env` en la raíz del proyecto y completar las variables de entorno:
-
-```env
-PORT=8080
-NODE_ENV=development
-MONGO_URI=tu_uri_de_mongodb
-```
+Crear el archivo `.env` en la raíz del proyecto y completar las variables de entorno.
 
 Iniciar el servidor:
 
@@ -596,17 +716,25 @@ npm start
 
 Si la conexión es correcta, se mostrará un mensaje indicando que la conexión a la base de datos fue establecida y que el servidor está escuchando en el puerto configurado.
 
-Por ejemplo:
+Ejemplo:
 
 ```text
 Conexión a la base de datos establecida
+
 Servidor escuchando en el puerto 8080
 ```
 
-La API estará disponible en:
+La aplicación estará disponible en:
 
 ```text
 http://localhost:8080
+```
+
+Las vistas principales estarán disponibles en:
+
+```text
+http://localhost:8080/views/services
+http://localhost:8080/views/bookings
 ```
 
 ---
@@ -632,6 +760,8 @@ Se realizaron pruebas sobre:
 * DELETE de un ID inexistente.
 * GET posterior a un DELETE para comprobar la eliminación.
 
+Además, se comprobó la actualización en tiempo real de la vista mediante Socket.io al crear nuevos servicios.
+
 ## Bookings
 
 Se realizaron pruebas sobre:
@@ -643,6 +773,7 @@ Se realizaron pruebas sobre:
 * Agregar nuevamente un servicio existente y comprobar el incremento de `quantity`.
 * Validación de reserva inexistente.
 * Validación de servicio inexistente.
+* Visualización de reservas mediante Handlebars.
 
 ## Messages
 
@@ -671,6 +802,14 @@ ODM utilizado para trabajar con MongoDB desde Node.js, definir Schemas y Models 
 ### dotenv
 
 Paquete utilizado para cargar las variables de entorno definidas en el archivo `.env`.
+
+### express-handlebars
+
+Motor de vistas utilizado para generar páginas HTML dinámicas desde el servidor.
+
+### Socket.io
+
+Biblioteca utilizada para implementar comunicación en tiempo real entre el servidor y los clientes.
 
 ---
 
@@ -707,12 +846,22 @@ Durante el desarrollo del proyecto se trabajaron conceptos de:
 * Manejo de errores
 * Clases y métodos
 * Persistencia de datos
+* Handlebars
+* Vistas dinámicas
+* Layouts
+* Archivos estáticos
+* CSS
+* Flexbox
+* Socket.io
+* Comunicación en tiempo real
+* Eventos de Socket.io
+* Actualización dinámica de vistas
 * Pruebas de API con Postman
 
 ---
 
 # 👩‍💻 Autor
 
-**Andrea Valentina Santamaria**
+**Valentina Santamaria**
 
 Proyecto desarrollado como parte del curso **Backend 1 - Coderhouse**.

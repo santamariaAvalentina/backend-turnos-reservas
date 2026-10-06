@@ -28,6 +28,6 @@ app.set("view engine", "handlebars");
 
 app.set("views", "./src/views");
 
-app.use("/", viewsRouter);
+app.use("/views", viewsRouter);
 
 export default app;

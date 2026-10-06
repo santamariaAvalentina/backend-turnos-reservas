@@ -1,0 +1,15 @@
+<h1>Reservas</h1>
+
+<div id="bookings-container">
+
+  {{#each bookings}}
+    <article>
+      <h2>Cliente: {{clientName}}</h2>
+      <p>Email: {{clientEmail}}</p>
+      <p>Fecha: {{date}}</p>
+      <p>Hora: {{time}}</p>
+      <p>Estado: {{status}}</p>
+    </article>
+  {{/each}}
+
+</div>

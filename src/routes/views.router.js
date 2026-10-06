@@ -22,4 +22,8 @@ router.get("/realtime-services", (req, res) => {
   viewsController.getRealtimeServicesView(req, res);
 });
 
+router.get("/bookings", (req, res) => {
+  viewsController.getBookingsView(req, res);
+});
+
 export default router;

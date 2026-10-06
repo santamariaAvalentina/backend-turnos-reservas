@@ -25,6 +25,9 @@ export class BookingsService {
 
     return await bookingsRepository.create(newBooking);
   }
+  async getBookings() {
+    return await bookingsRepository.getAll();
+  }
 
   async getBookingById(id) {
     return await bookingsRepository.getById(id);
@@ -43,8 +46,8 @@ export class BookingsService {
       throw new Error("Servicio no encontrado");
     }
 
-    const existingService = booking.services.find(
-      (item) => item.service.equals(serviceId),
+    const existingService = booking.services.find((item) =>
+      item.service.equals(serviceId),
     );
 
     if (existingService) {
