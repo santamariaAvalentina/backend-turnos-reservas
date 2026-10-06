@@ -7,15 +7,18 @@ const bookingSchema = new mongoose.Schema(
     date: { type: String, required: true },
     time: { type: String, required: true },
     status: { type: String, required: true },
+
     services: [
       {
         service: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'services'
+          ref: 'services',
+          required: true
         },
         quantity: {
           type: Number,
-          default: 1
+          default: 1,
+          min: 1
         }
       }
     ]
