@@ -1,0 +1,17 @@
+<h1>Servicios Odontologios disponibles</h1>
+
+{{#each services}}
+  <article>
+    <h2>Nombre del servicio:{{name}}</h2>
+    <p>Este servicio consta de:{{description}}</p>
+    <p>Duración: {{duration}} minutos</p>
+    <p>Precio: ${{price}}</p>
+    <p>Categoría: {{category}}</p>
+    {{#if available}}
+      <p>Servicio disponible</p>
+    {{else}}
+      <p>Servicio no disponible</p>
+    {{/if}}
+  </article>
+{{/each}}
+

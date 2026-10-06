@@ -38,6 +38,10 @@ export default class ServiceController {
     try {
       const newService = await servicesService.createService(req.body);
 
+      const services = await servicesService.getServices({});
+
+      req.app.io.emit("servicesUpdated", services);
+
       res.status(201).json(newService);
     } catch (error) {
       res.status(400).json({
@@ -45,7 +49,6 @@ export default class ServiceController {
       });
     }
   }
-
   async updateService(req, res) {
     try {
       const { id } = req.params;

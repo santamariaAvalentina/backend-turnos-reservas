@@ -1,0 +1,21 @@
+<h1>Servicios en tiempo real</h1>
+
+<div id="services-container">
+
+  {{#each services}}
+    <article>
+      <h2>{{name}}</h2>
+      <p>{{description}}</p>
+      <p>Duración: {{duration}} minutos</p>
+      <p>Precio: ${{price}}</p>
+      <p>Categoría: {{category}}</p>
+
+      {{#if available}}
+        <p>Servicio disponible</p>
+      {{else}}
+        <p>Servicio no disponible</p>
+      {{/if}}
+    </article>
+  {{/each}}
+
+</div>

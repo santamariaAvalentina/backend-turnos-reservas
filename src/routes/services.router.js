@@ -1,11 +1,10 @@
 import express from "express";
+
 import ServiceController from "../controllers/services.controller.js";
 
+const router = express.Router();
 
-const  router = express.Router();
 const serviceController = new ServiceController();
-
-
 
 router.get("/", serviceController.getServices);
 
@@ -18,7 +17,3 @@ router.put("/:id", serviceController.updateService);
 router.delete("/:id", serviceController.deleteService);
 
 export default router;
-
-
-
-

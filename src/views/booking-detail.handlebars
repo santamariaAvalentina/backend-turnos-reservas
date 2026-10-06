@@ -1,0 +1,17 @@
+<h1>Detalle de la reserva</h1>
+
+<p>Cliente: {{booking.clientName}}</p>
+
+<p>Email: {{booking.clientEmail}}</p>
+
+<p>Fecha: {{booking.date}}</p>
+
+<p>Hora: {{booking.time}}</p>
+
+<p>Estado: {{booking.status}}</p>
+<h2>Servicios de la reserva</h2>
+
+{{#each booking.services}}
+    <p>Servicio: {{service}}</p>
+    <p>Cantidad: {{quantity}}</p>
+{{/each}}

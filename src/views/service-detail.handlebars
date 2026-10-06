@@ -1,0 +1,18 @@
+
+<h1>Detalle del servicio</h1>
+
+<h2>{{service.name}}</h2>
+
+<p>Descripción: {{service.description}}</p>
+
+<p>Duración: {{service.duration}} minutos</p>
+
+<p>Precio: ${{service.price}}</p>
+
+<p>Categoría: {{service.category}}</p>
+
+{{#if service.available}}
+  <p>Servicio disponible</p>
+{{else}}
+  <p>Servicio no disponible</p>
+{{/if}}
